@@ -1,0 +1,1594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLI Calculator | Circular WR-11-2026-07</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        fci: {
+                            navy: '#0b2545',
+                            dark: '#13315c',
+                            blue: '#134074',
+                            accent: '#e0a96d',
+                            accentHover: '#c99355',
+                            light: '#eef4f8',
+                            gold: '#d4af37'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+                font-size: 11pt;
+            }
+            .print-card {
+                border: 1px solid #ccc !important;
+                box-shadow: none !important;
+                page-break-inside: avoid;
+            }
+        }
+        .print-only {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Top Header -->
+    <header class="bg-gradient-to-r from-fci-navy via-fci-dark to-fci-blue text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center p-1.5 shadow-sm text-amber-300">
+                    <i data-lucide="calculator" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        PLI Advisory & Computation Engine
+                        <span class="text-xs bg-amber-400/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded font-normal">Circular Implementation</span>
+                    </h1>
+                    <p class="text-xs sm:text-sm text-slate-300">
+                        Incentive Calculator &bull; Ref: Circular No. WR-11-2026-07 (04-11-2026)
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 no-print">
+                <button onclick="openUndertakingModal()" class="text-xs sm:text-sm bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg border border-white/20 flex items-center gap-1.5 transition">
+                    <i data-lucide="file-text" class="w-4 h-4 text-amber-300"></i>
+                    <span>Annexure-I</span>
+                </button>
+                <button onclick="printCombinedSlip()" class="text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg shadow flex items-center gap-1.5 transition">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-amber-300"></i>
+                    <span>Combined Slip (24-25 + 25-26)</span>
+                </button>
+                <button onclick="window.print()" class="text-xs sm:text-sm bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold px-3 py-1.5 rounded-lg shadow flex items-center gap-1.5 transition">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    <span>Print Slip</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full">
+        
+        <!-- Tab Navigation (FY 2024-25 Final vs FY 2025-26 Advance vs Combined) -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 no-print">
+            <div class="bg-slate-200 p-1 rounded-xl flex flex-wrap w-full sm:w-auto shadow-inner">
+                <button id="tab-btn-2024" onclick="switchTab('2024-25')" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 bg-white text-fci-navy shadow-sm">
+                    <i data-lucide="calculator" class="w-4 h-4 text-fci-blue"></i>
+                    <span>Final PLI (2024-25)</span>
+                    <span class="ml-1 text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-bold">Balance</span>
+                </button>
+                <button id="tab-btn-2025" onclick="switchTab('2025-26')" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 text-slate-600 hover:text-slate-900">
+                    <i data-lucide="banknote" class="w-4 h-4"></i>
+                    <span>Advance (2025-26)</span>
+                    <span class="ml-1 text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded font-bold">2/3rd</span>
+                </button>
+                <button id="tab-btn-combined" onclick="switchTab('combined')" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 text-slate-600 hover:text-slate-900">
+                    <i data-lucide="layers" class="w-4 h-4 text-emerald-600"></i>
+                    <span>संयुक्त रिपोर्ट (Combined Statement)</span>
+                    <span class="ml-1 text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-bold">Balance + Advance</span>
+                </button>
+            </div>
+
+            <!-- Reference Badge -->
+            <div class="text-xs text-slate-600 bg-white border border-slate-200 rounded-lg px-3 py-2 flex items-center gap-2 shadow-sm">
+                <i data-lucide="info" class="w-4 h-4 text-blue-500 shrink-0"></i>
+                <span>Ref: <strong class="text-slate-800">Circular WR-11-2026-07</strong> (HQ-WRC/9/2022-PIR)</span>
+            </div>
+        </div>
+
+        <!-- Ineligibility Banner for Port Labourers -->
+        <div id="port-warning-banner" class="hidden mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm">
+            <div class="flex items-start">
+                <i data-lucide="alert-octagon" class="w-5 h-5 text-red-600 mt-0.5 mr-3 shrink-0"></i>
+                <div class="text-sm text-red-800">
+                    <p class="font-bold">Important Circular Provision:</p>
+                    <p>As per Para 1 of Circular No. WR-11-2026-07, <strong>Departmental labourers of Chennai and Vizag ports are not eligible for PLI</strong>.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- General Disqualification Alert for 2025-26 Advance -->
+        <div id="advance-disqualify-banner" class="hidden mb-6 bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg shadow-sm">
+            <div class="flex items-start">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 mt-0.5 mr-3 shrink-0"></i>
+                <div class="text-sm text-amber-900">
+                    <p class="font-bold">Not Eligible for 2025-26 Advance:</p>
+                    <p id="advance-disqualify-msg">Personnel who retired, resigned, or died during 2025-26, apprentices/trainees/MTs, or personnel on deputation/lien are not admissible for PLI advance.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Grid Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- LEFT COLUMN: INPUT PARAMETERS (5 cols) -->
+            <div class="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden no-print">
+                <div class="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-5 h-5 text-fci-blue"></i>
+                        <h2 class="font-bold text-slate-800">Input Parameters</h2>
+                    </div>
+                    <button onclick="resetDefaults()" title="Reset to Sample Values" class="text-xs text-slate-500 hover:text-fci-navy flex items-center gap-1 font-medium">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset
+                    </button>
+                </div>
+
+                <div class="p-6 space-y-5">
+                    <!-- Employee Category Selection -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                            Employee Category <span class="text-red-500">*</span>
+                        </label>
+                        <select id="emp-category" onchange="handleCategoryChange()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-fci-blue focus:border-fci-blue outline-none transition font-medium">
+                            <option value="cat1_4">Category I & II Executives / Cat-III & IV Staff</option>
+                            <option value="dept_labour">Departmental Labourers</option>
+                            <option value="dps_labour">Direct Payment System (DPS) Labourers</option>
+                        </select>
+                        <p id="cat-desc" class="text-[11px] text-slate-500 mt-1">
+                            Eligibility: 2% of revised Basic Pay. Max Cap: ₹37,800.
+                        </p>
+                    </div>
+
+                    <!-- Port Location Check (For Departmental / DPS) -->
+                    <div id="port-check-group" class="hidden p-3 bg-slate-50 rounded-lg border border-slate-200">
+                        <label class="flex items-start gap-2.5 cursor-pointer">
+                            <input type="checkbox" id="is-port-worker" onchange="calculatePLI()" class="mt-0.5 rounded text-fci-blue focus:ring-fci-blue w-4 h-4">
+                            <span class="text-xs text-slate-700">
+                                Working at <strong>Chennai or Visakhapatnam (Vizag) Port</strong>
+                                <span class="block text-[11px] text-red-600 font-medium">Departmental port labourers are explicitly exempt/ineligible</span>
+                            </span>
+                        </label>
+                    </div>
+
+                    <!-- Category I-IV Specific Inputs -->
+                    <div id="cat1_4-inputs" class="space-y-4">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                                    Current As-on-Date Basic Pay (₹) <span class="text-red-500">*</span>
+                                </label>
+                                <span class="text-[11px] text-slate-500">As in current month (Nov 2026)</span>
+                            </div>
+                            <div class="relative">
+                                <span class="absolute left-3.5 top-2.5 text-slate-400 font-bold text-sm">₹</span>
+                                <input type="number" id="basic-pay" value="65000" min="0" step="100" oninput="calculatePLI()" class="w-full pl-8 pr-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-fci-blue focus:border-fci-blue outline-none font-semibold text-slate-800">
+                            </div>
+                            <div class="flex items-center justify-between text-[11px] text-slate-500 mt-1">
+                                <span>FY 24-25 Exact Basic: <strong id="annual-basic-display" class="text-slate-800 font-bold">₹0</strong></span>
+                                <button type="button" onclick="toggleMonthWiseModal()" class="text-fci-blue hover:underline font-semibold flex items-center gap-1">
+                                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i> 12 माह विवरण (Month-by-Month)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Increment & Promotion Configuration Panel -->
+                        <div class="bg-blue-50/70 border border-blue-200/80 rounded-xl p-3.5 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-fci-navy flex items-center gap-1.5">
+                                    <i data-lucide="trending-up" class="w-4 h-4 text-fci-blue"></i>
+                                    फाइनेंशियल ईयर (April–March) बैक-कैलकुलेशन
+                                </span>
+                                <span class="text-[10px] bg-blue-200 text-blue-900 font-bold px-1.5 py-0.5 rounded">3% Annual</span>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-[11px] font-medium text-slate-600 block mb-1">
+                                        वार्षिक इंक्रीमेंट चक्र (Annual Increment)
+                                    </label>
+                                    <select id="increment-cycle" onchange="calculatePLI()" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:ring-1 focus:ring-fci-blue outline-none">
+                                        <option value="july" selected>1st July (3 mo Apr-Jun + 9 mo Jul-Mar)</option>
+                                        <option value="january">1st January (9 mo Apr-Dec + 3 mo Jan-Mar)</option>
+                                        <option value="none">कोई इंक्रीमेंट नहीं (No Increment / Stagnated)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-[11px] font-medium text-slate-600 block mb-1">
+                                        दर्ज बेसिक का संदर्भ माह (Reference Period)
+                                    </label>
+                                    <select id="input-basic-reference" onchange="calculatePLI()" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:ring-1 focus:ring-fci-blue outline-none">
+                                        <option value="current_2026" selected>वर्तमान बेसिक (Nov 2026 / FY 2026-27)</option>
+                                        <option value="fy_2025_mid">FY 2025-26 के दौरान (Oct 2025)</option>
+                                        <option value="fy_2024_end">FY 2024-25 के अंत में (31.03.2025)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Promotion / Extra Increment Checkbox -->
+                            <div class="pt-2 border-t border-blue-200/60">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="has-promotion" onchange="togglePromotionInputs()" class="rounded text-fci-blue focus:ring-fci-blue w-4 h-4">
+                                    <span class="text-xs font-semibold text-slate-700">
+                                        प्रमोशन या अतिरिक्त इंक्रीमेंट (Promotion +3%)
+                                    </span>
+                                </label>
+
+                                <div id="promotion-details-panel" class="hidden mt-2 grid grid-cols-2 gap-2 bg-white/80 p-2.5 rounded-lg border border-blue-200">
+                                    <div>
+                                        <label class="text-[11px] text-slate-600 font-medium block">प्रमोशन का माह (Effective Month)</label>
+                                        <select id="promo-month-year" onchange="calculatePLI()" class="w-full bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs">
+                                            <option value="2024-04">April 2024</option>
+                                            <option value="2024-07">July 2024</option>
+                                            <option value="2024-10" selected>October 2024</option>
+                                            <option value="2025-01">January 2025</option>
+                                            <option value="2025-04">April 2025</option>
+                                            <option value="2025-07">July 2025</option>
+                                            <option value="2025-10">October 2025</option>
+                                            <option value="2026-01">January 2026</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-[11px] text-slate-600 font-medium block">अतिरिक्त इंक्रीमेंट दर (%)</label>
+                                        <input type="number" id="promo-rate" value="3" min="1" max="6" step="1" oninput="calculatePLI()" class="w-full bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs font-semibold">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Departmental Labour Specific Inputs -->
+                    <div id="dept-inputs" class="hidden space-y-4">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                                    Monthly Basic Pay + IDA (₹) <span class="text-red-500">*</span>
+                                </label>
+                                <span class="text-[11px] text-slate-500">Wage ceiling: ₹21,000</span>
+                            </div>
+                            <div class="relative">
+                                <span class="absolute left-3.5 top-2.5 text-slate-400 font-bold text-sm">₹</span>
+                                <input type="number" id="dept-basic-ida" value="28500" min="0" step="100" oninput="calculatePLI()" class="w-full pl-8 pr-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-fci-blue focus:border-fci-blue outline-none font-semibold text-slate-800">
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-1">
+                                Rule: 15% of min(Basic + IDA, ₹21,000). Active base for calculation: <strong id="dept-effective-base" class="text-fci-navy">₹21,000</strong>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- DPS Labour Specific Inputs -->
+                    <div id="dps-inputs" class="hidden space-y-4">
+                        <div>
+                            <label class="text-xs font-semibold text-slate-700 uppercase tracking-wider block mb-1">
+                                Monthly Piece-Rate Earnings (₹)
+                            </label>
+                            <div class="relative">
+                                <span class="absolute left-3.5 top-2.5 text-slate-400 font-bold text-sm">₹</span>
+                                <input type="number" id="dps-piecerate" value="18000" min="0" step="100" oninput="calculatePLI()" class="w-full pl-8 pr-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-fci-blue focus:border-fci-blue outline-none font-semibold text-slate-800">
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-1">Actual piece-rate output forms part of wages.</p>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                                    Interim Relief (IR)
+                                </label>
+                                <span class="text-[11px] text-slate-500">₹50/day (NIT/HC Mumbai)</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <span class="text-[11px] text-slate-500">Working Days / mo</span>
+                                    <input type="number" id="dps-ir-days" value="26" min="0" max="31" oninput="calculatePLI()" class="w-full px-3 py-1.5 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-fci-blue outline-none font-medium">
+                                </div>
+                                <div>
+                                    <span class="text-[11px] text-slate-500">Monthly IR Amount</span>
+                                    <input type="text" id="dps-ir-amount" value="₹1,300" readonly class="w-full px-3 py-1.5 text-sm bg-slate-100 border border-slate-200 rounded-lg text-slate-600 font-semibold cursor-not-allowed">
+                                </div>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-1">Total monthly wage base: <span id="dps-total-wage-display" class="font-bold text-slate-700">₹19,300</span> (Capped at ₹21,000)</p>
+                        </div>
+                    </div>
+
+                    <!-- Service & Pro-rata Period Adjustment -->
+                    <div class="pt-2 border-t border-slate-200 space-y-4">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                                    Completed Calendar Months of Service
+                                </label>
+                                <span id="months-badge" class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded">12 Months</span>
+                            </div>
+                            <input type="range" id="service-months" min="1" max="12" value="12" oninput="updateMonthsSlider(this.value)" class="w-full accent-fci-navy cursor-pointer">
+                            <div class="flex justify-between text-[10px] text-slate-400 font-medium px-0.5">
+                                <span>1 mo</span>
+                                <span>3 mo</span>
+                                <span>6 mo</span>
+                                <span>9 mo</span>
+                                <span>12 mo (Full Year)</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-1">Para (a): Proportionately paid for completed months.</p>
+                        </div>
+                    </div>
+
+                    <!-- Leave Deductions Section (FY 2024-25 Specific) -->
+                    <div id="leave-adjustment-group" class="pt-2 border-t border-slate-200 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <label class="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                                Leave Deductions (FY 2024-25)
+                            </label>
+                            <span class="text-[11px] text-amber-700 font-medium">Excluding Casual Leave</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[11px] text-slate-600 font-medium block mb-1">
+                                    Non-CL Leaves (Days)
+                                </label>
+                                <input type="number" id="leaves-taken" value="0" min="0" max="365" oninput="calculatePLI()" class="w-full px-3 py-1.5 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-fci-blue outline-none font-medium">
+                                <span class="text-[10px] text-slate-400">Deduct days > 60</span>
+                            </div>
+                            <div>
+                                <label class="text-[11px] text-slate-600 font-medium block mb-1">
+                                    Leave Without Pay (LWP)
+                                </label>
+                                <input type="number" id="lwp-days" value="0" min="0" max="365" oninput="calculatePLI()" class="w-full px-3 py-1.5 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-fci-blue outline-none font-medium">
+                                <span class="text-[10px] text-slate-400">Days (Zero PLI)</span>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-500">
+                            Para (b): Pro-rata deduction for leave availed beyond 60 days. No PLI for LWP.
+                        </p>
+                    </div>
+
+                    <!-- Advance Already Received Adjustment (FY 2024-25 Specific) -->
+                    <div id="advance-received-group" class="pt-2 border-t border-slate-200 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                                Advance Released in Oct 2025 (₹)
+                            </label>
+                            <button type="button" onclick="autoFillAdvance()" class="text-[11px] text-blue-600 hover:text-blue-800 underline font-medium">
+                                Auto 2/3rd Cap
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute left-3.5 top-2.5 text-slate-400 font-bold text-sm">₹</span>
+                            <input type="number" id="advance-paid" value="10400" min="0" step="100" oninput="calculatePLI()" class="w-full pl-8 pr-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-fci-blue outline-none font-semibold text-slate-800">
+                        </div>
+                        <p class="text-[11px] text-slate-500">
+                            Released vide Circular WR-11-2025-04 dated 16.10.2025 (2/3rd of eligible amount, max ₹25,000 for labour).
+                        </p>
+                    </div>
+
+                    <!-- FY 2025-26 Eligibility Toggles (FY 2025-26 Specific) -->
+                    <div id="eligibility-2025-group" class="hidden pt-2 border-t border-slate-200 space-y-3">
+                        <label class="text-xs font-semibold text-slate-700 uppercase tracking-wider block">
+                            2025-26 Eligibility Checks
+                        </label>
+
+                        <label class="flex items-start gap-2.5 cursor-pointer">
+                            <input type="checkbox" id="on-rolls-apr25" checked onchange="calculatePLI()" class="mt-0.5 rounded text-fci-blue focus:ring-fci-blue w-4 h-4">
+                            <span class="text-xs text-slate-700">
+                                On rolls of the Organization on <strong>01.04.2025</strong> and still in active service
+                            </span>
+                        </label>
+
+                        <label class="flex items-start gap-2.5 cursor-pointer">
+                            <input type="checkbox" id="retired-died-flag" onchange="calculatePLI()" class="mt-0.5 rounded text-red-500 focus:ring-red-500 w-4 h-4">
+                            <span class="text-xs text-slate-700">
+                                Retired, resigned, or expired during FY 2025-26
+                                <span class="block text-[11px] text-red-600">(Para 2.a: Ineligible for 2025-26 advance)</span>
+                            </span>
+                        </label>
+
+                        <label class="flex items-start gap-2.5 cursor-pointer">
+                            <input type="checkbox" id="deputation-trainee-flag" onchange="calculatePLI()" class="mt-0.5 rounded text-red-500 focus:ring-red-500 w-4 h-4">
+                            <span class="text-xs text-slate-700">
+                                Apprentice / Trainee / Management Trainee / Personnel on Deputation / Lien
+                                <span class="block text-[11px] text-red-600">(Not admissible for PLI)</span>
+                            </span>
+                        </label>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: DETAILED CALCULATION BREAKDOWN & SLIP (7 cols) -->
+            <div class="lg:col-span-7 space-y-5">
+
+                <!-- MAIN RESULT CARD -->
+                <div class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden print-card">
+                    
+                    <!-- Result Card Header -->
+                    <div class="bg-gradient-to-r from-fci-navy to-fci-blue text-white p-6">
+                        <div class="flex flex-wrap justify-between items-center gap-2">
+                            <div>
+                                <span id="summary-pill" class="text-xs font-semibold px-2.5 py-1 rounded bg-amber-400 text-slate-900 uppercase tracking-wide">
+                                    Final PLI FY 2024-25
+                                </span>
+                                <h3 id="result-title" class="text-2xl font-bold mt-2 text-white">
+                                    Net Payable Amount
+                                </h3>
+                                <p id="result-subtitle" class="text-xs text-slate-300 mt-0.5">
+                                    After pro-rata service, leave deduction, cap of ₹37,800 and advance adjustment
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <div id="net-amount-display" class="text-3xl sm:text-4xl font-extrabold text-amber-300 tracking-tight">
+                                    ₹5,200
+                                </div>
+                                <div id="status-badge" class="mt-1 inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 font-medium">
+                                    <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Release to Employee
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step-by-Step Calculation Itemization Table -->
+                    <div class="p-6 divide-y divide-slate-100 space-y-4">
+                        <!-- Step 1: Gross Eligibility -->
+                        <div class="pt-2 flex justify-between items-start">
+                            <div>
+                                <span class="text-xs font-semibold text-slate-700 block">1. Gross Eligibility Formula</span>
+                                <p id="formula-detail-text" class="text-[11px] text-slate-500">2% of Revised Basic Pay</p>
+                            </div>
+                            <div class="text-right">
+                                <span id="gross-eligibility-display" class="font-bold text-slate-800 text-sm">₹15,600</span>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Pro-rata Service Adjustment -->
+                        <div class="pt-3 flex justify-between items-start">
+                            <div>
+                                <span class="text-xs font-semibold text-slate-700 block">2. Pro-rata Service Factor</span>
+                                <p id="prorata-detail-text" class="text-[11px] text-slate-500">12 out of 12 completed months (100%)</p>
+                            </div>
+                            <div class="text-right">
+                                <span id="prorata-eligibility-display" class="font-bold text-slate-800 text-sm">₹15,600</span>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Leave Deductions -->
+                        <div id="leave-breakdown-row" class="pt-3 flex justify-between items-start">
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-xs font-semibold text-slate-700 block">3. Leave Deductions</span>
+                                    <span id="leave-days-tag" class="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.2 rounded">0 days</span>
+                                </div>
+                                <p id="leave-deduction-text" class="text-[11px] text-slate-500">Deduction for leaves > 60 days (excl CL) + LWP</p>
+                            </div>
+                            <div class="text-right">
+                                <span id="leave-deduction-amount" class="font-bold text-red-600 text-sm">- ₹0</span>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Circular Ceiling Limit -->
+                        <div class="pt-3 flex justify-between items-start">
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-xs font-semibold text-slate-700 block">4. Ceiling Capped Eligibility</span>
+                                    <span id="cap-badge" class="text-[10px] bg-slate-100 text-slate-700 border border-slate-300 font-semibold px-1.5 py-0.2 rounded">Max Cap: ₹37,800</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500">Subject to maximum ceiling under the Circular</p>
+                            </div>
+                            <div class="text-right">
+                                <span id="capped-eligibility-display" class="font-bold text-fci-navy text-sm">₹15,600</span>
+                            </div>
+                        </div>
+
+                        <!-- Step 5: Advance Adjustment (FY 2024-25 only) -->
+                        <div id="advance-breakdown-row" class="pt-3 flex justify-between items-start">
+                            <div>
+                                <span class="text-xs font-semibold text-slate-700 block">5. Less: Advance Released in Oct 2025</span>
+                                <p class="text-[11px] text-slate-500">Paid vide Circular WR-11-2025-04 dated 16.10.2025</p>
+                            </div>
+                            <div class="text-right">
+                                <span id="advance-deduction-display" class="font-bold text-amber-700 text-sm">- ₹10,400</span>
+                            </div>
+                        </div>
+
+                        <!-- Summary Final Balance Row -->
+                        <div class="pt-4 flex justify-between items-center bg-slate-50 -mx-6 -mb-6 p-6 border-t border-slate-200">
+                            <div>
+                                <span id="final-label-text" class="text-sm font-bold text-slate-800 block">Balance Payment Released Now</span>
+                                <span id="final-note-text" class="text-[11px] text-slate-500">Final settlement after adjusting Oct 2025 advance</span>
+                            </div>
+                            <div class="text-right">
+                                <span id="final-balance-display" class="text-2xl font-black text-emerald-700">₹5,200</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COMBINED REPORT SECTION (Displayed when Combined Tab is chosen or print requested) -->
+                <div id="combined-report-container" class="hidden bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden p-6 space-y-6">
+                    <div class="border-b border-slate-200 pb-4 flex justify-between items-center">
+                        <div>
+                            <span class="text-xs font-bold px-2.5 py-1 rounded bg-amber-400 text-slate-900 uppercase tracking-wide">
+                                Combined Statement
+                            </span>
+                            <h3 class="text-xl font-extrabold text-fci-navy mt-1">
+                                FY 2024-25 Final PLI + FY 2025-26 Advance Combined Slip
+                            </h3>
+                            <p class="text-xs text-slate-500">
+                                Single comprehensive audit settlement sheet as per Circular WR-11-2026-07
+                            </p>
+                        </div>
+                        <button onclick="printCombinedSlip()" class="no-print text-xs bg-fci-navy hover:bg-fci-blue text-white px-3.5 py-2 rounded-lg font-semibold flex items-center gap-1.5 shadow">
+                            <i data-lucide="printer" class="w-4 h-4"></i> Print Statement
+                        </button>
+                    </div>
+
+                    <!-- Payout Executive Summary Box -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                        <div class="p-3 bg-white rounded-lg border border-slate-200">
+                            <span class="text-xs text-slate-500 font-semibold block">FY 2024-25 Final Balance</span>
+                            <span id="comb-sum-bal24" class="text-lg font-bold text-emerald-700">₹0</span>
+                            <span class="text-[10px] text-slate-400 block mt-0.5">After Advance Adjustment</span>
+                        </div>
+                        <div class="p-3 bg-white rounded-lg border border-slate-200">
+                            <span class="text-xs text-slate-500 font-semibold block">FY 2025-26 PLI Advance</span>
+                            <span id="comb-sum-adv25" class="text-lg font-bold text-blue-700">₹0</span>
+                            <span class="text-[10px] text-slate-400 block mt-0.5">2/3rd (Max ₹25,000)</span>
+                        </div>
+                        <div class="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                            <span class="text-xs text-emerald-900 font-bold block">TOTAL NET PAYABLE NOW</span>
+                            <span id="comb-sum-total" class="text-2xl font-black text-emerald-700">₹0</span>
+                            <span class="text-[10px] text-emerald-800 block mt-0.5">Net Disbursal to Employee</span>
+                        </div>
+                    </div>
+
+                    <!-- Dual Comparative Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs border border-slate-200 text-left">
+                            <thead class="bg-slate-100 text-slate-800 font-bold">
+                                <tr>
+                                    <th class="p-2.5 border">Component / विवरण</th>
+                                    <th class="p-2.5 border text-right">FY 2024-25 (Final)</th>
+                                    <th class="p-2.5 border text-right">FY 2025-26 (Advance)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                                <tr>
+                                    <td class="p-2 border font-medium">1. Exact Annual Basic Wages (12 Months April-March)</td>
+                                    <td class="p-2 border text-right font-semibold text-slate-700" id="comb-tbl-wage24">₹0</td>
+                                    <td class="p-2 border text-right font-semibold text-slate-700" id="comb-tbl-wage25">₹0</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2 border font-medium">2. Full Eligibility (2% Basic or 15% Labour Formula)</td>
+                                    <td class="p-2 border text-right font-semibold" id="comb-tbl-elig24">₹0</td>
+                                    <td class="p-2 border text-right font-semibold" id="comb-tbl-elig25">₹0</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2 border font-medium">3. Pro-rata completed months factor</td>
+                                    <td class="p-2 border text-right" id="comb-tbl-prorata24">12/12 mo</td>
+                                    <td class="p-2 border text-right" id="comb-tbl-prorata25">12/12 mo</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2 border font-medium">4. Leave Deductions (>60 days non-CL + LWP)</td>
+                                    <td class="p-2 border text-right text-red-600" id="comb-tbl-leave24">- ₹0</td>
+                                    <td class="p-2 border text-right text-slate-400">N/A (Advance stage)</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2 border font-medium">5. Ceiling Applied</td>
+                                    <td class="p-2 border text-right font-semibold text-fci-navy" id="comb-tbl-cap24">Max ₹37,800</td>
+                                    <td class="p-2 border text-right font-semibold text-blue-700" id="comb-tbl-cap25">2/3rd (Max ₹25,000)</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2 border font-medium">6. Less: Advance Disbursed in Oct 2025 (WR-11-2025-04)</td>
+                                    <td class="p-2 border text-right text-amber-700 font-semibold" id="comb-tbl-advded24">- ₹0</td>
+                                    <td class="p-2 border text-right text-slate-400">N/A</td>
+                                </tr>
+                                <tr class="bg-amber-50 font-bold text-sm">
+                                    <td class="p-2.5 border text-slate-900">NET DISBURSABLE AMOUNT</td>
+                                    <td class="p-2.5 border text-right text-emerald-700" id="comb-tbl-net24">₹0</td>
+                                    <td class="p-2.5 border text-right text-blue-700" id="comb-tbl-net25">₹0</td>
+                                </tr>
+                                <tr class="bg-emerald-100 font-black text-sm">
+                                    <td colspan="2" class="p-3 border text-emerald-950">
+                                        TOTAL NET PAYABLE (COMBINED BALANCE + ADVANCE)
+                                    </td>
+                                    <td class="p-3 border text-right text-emerald-900 text-base" id="comb-tbl-grandtotal">
+                                        ₹0
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Undertaking Status for 25-26 -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-900 flex items-start gap-2.5">
+                        <i data-lucide="info" class="w-4 h-4 text-blue-600 mt-0.5 shrink-0"></i>
+                        <div>
+                            <strong>Undertaking Compliance:</strong> In terms of Para 2(b) of Circular WR-11-2026-07, the PLI advance of 2025-26 is released on furnishing Annexure-I Undertaking to refund/adjust against future dues if the final eligibility is less than the advance paid.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Circular Formula & Reference Guide -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 no-print space-y-4">
+                    <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <i data-lucide="book-open" class="w-4 h-4 text-fci-blue"></i>
+                        Circular Provisions & Calculation Rules Reference
+                    </h4>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                            <span class="font-bold text-fci-navy block">Category I, II, III & IV Staff</span>
+                            <p class="text-slate-600 leading-relaxed">
+                                &bull; FY 2024-25: <strong>2% of Revised Basic Pay</strong>.<br>
+                                &bull; Max overall limit: <strong>₹37,800/-</strong>.<br>
+                                &bull; 2025-26 Advance: <strong>2/3rd of 2% Basic Pay</strong> (Max ₹25,000/-).
+                            </p>
+                        </div>
+
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                            <span class="font-bold text-fci-navy block">Departmental & DPS Labourers</span>
+                            <p class="text-slate-600 leading-relaxed">
+                                &bull; <strong>15% of min(Basic + IDA, ₹21,000) &times; Months</strong>.<br>
+                                &bull; DPS includes piece-rate earning + <strong>₹50/day IR</strong>.<br>
+                                &bull; FY 24-25 Max: <strong>₹37,800/-</strong> | Advance Max: <strong>₹25,000/-</strong>.
+                            </p>
+                        </div>
+
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                            <span class="font-bold text-amber-800 block">Leave & Ineligibility Clauses</span>
+                            <p class="text-slate-600 leading-relaxed">
+                                &bull; Pro-rata deduction for leave > <strong>60 days</strong> (excl CL).<br>
+                                &bull; <strong>Zero PLI</strong> for Leave Without Pay (LWP).<br>
+                                &bull; Trainees/MTs/Deputation: <strong>Not admissible</strong>.
+                            </p>
+                        </div>
+
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                            <span class="font-bold text-emerald-800 block">Advance Recovery / Undertaking</span>
+                            <p class="text-slate-600 leading-relaxed">
+                                &bull; Excess advance paid is <strong>adjustable/recoverable</strong>.<br>
+                                &bull; 2025-26 advance requires signed <strong>Annexure-I Undertaking</strong> to refund if applicable.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PRINT VIEW SLIP TEMPLATE (Rendered when user clicks Print) -->
+                <div class="print-only p-8 bg-white text-black space-y-4">
+                    <div class="text-center border-b pb-4">
+                        <h2 class="text-xl font-bold uppercase tracking-wider">PERFORMANCE LINKED INCENTIVE STATEMENT</h2>
+                        <h3 class="text-sm font-semibold">ACCOUNTS & ESTABLISHMENT WING</h3>
+                        <p class="text-xs text-gray-600 mt-1">PLI CALCULATION & DISBURSAL STATEMENT (Circular No. WR-11-2026-07 dated 04-11-2026)</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 text-xs pt-2">
+                        <div>
+                            <p><strong>Scheme:</strong> <span id="print-scheme-title">Final PLI for FY 2024-25</span></p>
+                            <p><strong>Employee Category:</strong> <span id="print-category-title">Cat I/II/III/IV</span></p>
+                            <p><strong>Calculation Base:</strong> <span id="print-wage-base">₹65,000 / month</span></p>
+                        </div>
+                        <div>
+                            <p><strong>Service Rendered:</strong> <span id="print-service-months">12 Completed Months</span></p>
+                            <p><strong>Leave Days Deducted:</strong> <span id="print-leave-deductions">0 Days</span></p>
+                            <p><strong>Statement Date:</strong> <span id="print-today-date">04-11-2026</span></p>
+                        </div>
+                    </div>
+
+                    <table class="w-full text-xs border border-gray-300 mt-4 text-left">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="p-2 border">S.No</th>
+                                <th class="p-2 border">Calculation Component</th>
+                                <th class="p-2 border text-right">Amount (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="p-2 border">1</td>
+                                <td class="p-2 border" id="print-item1-desc">Gross PLI Eligibility before Pro-rata</td>
+                                <td class="p-2 border text-right" id="print-item1-val">₹15,600.00</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2 border">2</td>
+                                <td class="p-2 border" id="print-item2-desc">Pro-rata Service Adjustment</td>
+                                <td class="p-2 border text-right" id="print-item2-val">₹15,600.00</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2 border">3</td>
+                                <td class="p-2 border">Leave deductions (>60 days non-CL + LWP)</td>
+                                <td class="p-2 border text-right" id="print-item3-val">₹0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2 border">4</td>
+                                <td class="p-2 border" id="print-item4-desc">Ceiling Applied (Max ₹37,800 / ₹25,000)</td>
+                                <td class="p-2 border text-right" id="print-item4-val">₹15,600.00</td>
+                            </tr>
+                            <tr id="print-advance-row">
+                                <td class="p-2 border">5</td>
+                                <td class="p-2 border">Less: Advance already disbursed vide WR-11-2025-04</td>
+                                <td class="p-2 border text-right" id="print-item5-val">₹10,400.00</td>
+                            </tr>
+                            <tr class="font-bold bg-gray-50">
+                                <td class="p-2 border" colspan="2" id="print-final-label">NET BALANCE PAYABLE (FINAL)</td>
+                                <td class="p-2 border text-right text-sm" id="print-final-val">₹5,200.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="pt-6 text-xs space-y-4">
+                        <p class="italic text-gray-600">
+                            Note: Disbursal is subject to the conditions laid in circular WR-11-2026-07 and pending Writ Petition outcomes.
+                        </p>
+                        <div class="flex justify-between pt-12">
+                            <div class="text-center w-48 border-t border-gray-400 pt-1">
+                                Beneficiary Signature
+                            </div>
+                            <div class="text-center w-48 border-t border-gray-400 pt-1">
+                                Dealing Assistant / DDO
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Annexure-I Undertaking Modal -->
+    <div id="undertaking-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
+            <div class="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50 sticky top-0">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="file-check" class="w-5 h-5 text-fci-blue"></i>
+                    <h3 class="font-bold text-slate-800">Annexure-I: Undertaking Form</h3>
+                </div>
+                <button onclick="closeUndertakingModal()" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 text-sm text-slate-800 space-y-4 leading-relaxed font-serif" id="undertaking-content">
+                <div class="text-center pb-2 border-b">
+                    <p class="font-bold uppercase tracking-wide">Annexure to Circular No. WR-11-2026-07 dated 04-11-2026</p>
+                    <h4 class="text-lg font-extrabold mt-1">UNDERTAKING (Annexure-I)</h4>
+                </div>
+
+                <p class="pt-2">
+                    I, Shri/Ms. <span class="border-b-2 border-dotted border-slate-600 inline-block w-48 text-center font-sans font-semibold" id="modal-emp-name">_________________</span>, 
+                    presently working as <span class="border-b-2 border-dotted border-slate-600 inline-block w-40 text-center font-sans font-semibold" id="modal-emp-desig">_________________</span> 
+                    son/wife/daughter of Shri <span class="border-b-2 border-dotted border-slate-600 inline-block w-48 text-center font-sans">_________________</span> 
+                    in <span class="border-b-2 border-dotted border-slate-600 inline-block w-52 text-center font-sans">the Organization</span> 
+                    undertake to refund the amount being paid to me in terms of Circular No. WR-11-2026-07 dated 04-11-2026 in case, 
+                    it is decided by the Government/Management that the amount is not payable under PLI.
+                </p>
+
+                <p>
+                    Further, in case the amount of PLI payable works out to be less than the PLI being paid, due to any reason, 
+                    the excess payment received can be recovered against future dues/arrears.
+                </p>
+
+                <div class="pt-8 grid grid-cols-2 gap-6 font-sans text-xs">
+                    <div class="space-y-2">
+                        <p><strong>Station:</strong> ____________________</p>
+                        <p><strong>Date:</strong> <span id="undertaking-date">04-11-2026</span></p>
+                        <p><strong>Office:</strong> ____________________</p>
+                    </div>
+                    <div class="text-right space-y-2">
+                        <p class="pt-6">_____________________________</p>
+                        <p><strong>SIGNATURE</strong></p>
+                        <p><strong>CPF No:</strong> ____________________</p>
+                        <p><strong>DESIGNATION:</strong> ______________</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+                <button onclick="closeUndertakingModal()" class="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 transition">
+                    Close
+                </button>
+                <button onclick="printUndertaking()" class="px-4 py-2 text-xs font-semibold text-white bg-fci-navy hover:bg-fci-dark rounded-lg flex items-center gap-1.5 transition">
+                    <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                    Print Undertaking
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Month-Wise Basic Pay Breakdown Modal -->
+    <div id="monthwise-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 sticky top-0">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="table" class="w-5 h-5 text-fci-blue"></i>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-sm sm:text-base">माह-वार बेसिक पे विवरण (Month-wise Basic Pay Table)</h3>
+                        <p class="text-[11px] text-slate-500">Based on 3% increments and promotion back-calculation for FY 2024-25</p>
+                    </div>
+                </div>
+                <button onclick="toggleMonthWiseModal()" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="p-5 space-y-4">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs border border-slate-200 text-left">
+                        <thead class="bg-slate-100 text-slate-700 font-semibold">
+                            <tr>
+                                <th class="p-2 border">माह (Month)</th>
+                                <th class="p-2 border">घटना / स्थिति (Event / Increment)</th>
+                                <th class="p-2 border text-right">मासिक बेसिक पे (Basic Pay ₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="monthwise-table-body" class="divide-y divide-slate-100 font-medium">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                        <tfoot class="bg-amber-50 font-bold text-slate-800">
+                            <tr>
+                                <td colspan="2" class="p-2 border">कुल वित्तीय वर्ष बेसिक पे (Total Annual Basic)</td>
+                                <td id="monthwise-total-basic" class="p-2 border text-right text-fci-navy">₹0</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" class="p-2 border">2% PLI पात्रता (Eligible PLI before Ceiling)</td>
+                                <td id="monthwise-total-pli" class="p-2 border text-right text-emerald-700">₹0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs text-slate-600">
+                    <p class="font-bold text-slate-800 mb-1">गणना नियम (Computation Rule):</p>
+                    <p>यदि कर्मचारी ने वर्तमान बेसिक पे दर्ज की है, तो 3% वार्षिक इंक्रीमेंट (जुलाई/जनवरी) तथा प्रमोशन इंक्रीमेंट को रिवर्स (बैक-कैलकुलेट) करके FY 2024-25 के प्रत्येक माह (अप्रैल 2024 से मार्च 2025) की वास्तविक बेसिक पे निकाली जाती है। 2% PLI इसी सटीक कुल बेसिक पे पर देय होता है।</p>
+                </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
+                <button onclick="toggleMonthWiseModal()" class="px-4 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 transition">
+                    बंद करें (Close)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Annexure-I Undertaking Modal -->
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 text-slate-500 text-xs py-4 no-print mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <div>
+                Performance Linked Incentive (PLI) Advisory Engine
+            </div>
+            <div class="flex items-center gap-4">
+                <span>Wage Revision: Circulars 29.06.18, 27.02.19 & 11.10.19</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Engine -->
+    <script>
+        // State variables
+        let currentTab = '2024-25'; // '2024-25' or '2025-26' or 'combined'
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const printDateElem = document.getElementById('print-today-date');
+            if (printDateElem) printDateElem.innerText = dateStr;
+            const underDateElem = document.getElementById('undertaking-date');
+            if (underDateElem) underDateElem.innerText = dateStr;
+            calculatePLI();
+        });
+
+        // Toggle Promotion UI
+        function togglePromotionInputs() {
+            const hasPromo = document.getElementById('has-promotion').checked;
+            const panel = document.getElementById('promotion-details-panel');
+            if (hasPromo) {
+                panel.classList.remove('hidden');
+            } else {
+                panel.classList.add('hidden');
+            }
+            calculatePLI();
+        }
+
+        // Handle category change input visibility
+        function handleCategoryChange() {
+            const category = document.getElementById('emp-category').value;
+            const catDesc = document.getElementById('cat-desc');
+            const catInputs = document.getElementById('cat1_4-inputs');
+            const deptInputs = document.getElementById('dept-inputs');
+            const dpsInputs = document.getElementById('dps-inputs');
+            const portCheck = document.getElementById('port-check-group');
+
+            catInputs.classList.add('hidden');
+            deptInputs.classList.add('hidden');
+            dpsInputs.classList.add('hidden');
+            portCheck.classList.add('hidden');
+
+            if (category === 'cat1_4') {
+                catInputs.classList.remove('hidden');
+                catDesc.innerText = "Eligibility: 2% of revised Basic Pay. Max Cap: ₹37,800.";
+            } else if (category === 'dept_labour') {
+                deptInputs.classList.remove('hidden');
+                portCheck.classList.remove('hidden');
+                catDesc.innerText = "Eligibility: 15% of min(Basic + IDA, ₹21,000) × 12 months. Max Cap: ₹37,800.";
+            } else if (category === 'dps_labour') {
+                dpsInputs.classList.remove('hidden');
+                portCheck.classList.remove('hidden');
+                catDesc.innerText = "Eligibility: 15% of min(Piece-rate + ₹50/day IR, ₹21,000) × 12 months. Max Cap: ₹37,800.";
+            }
+            calculatePLI();
+        }
+
+        // Toggle Month-wise Breakdown Modal
+        function toggleMonthWiseModal() {
+            const modal = document.getElementById('monthwise-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        // Tab Switcher
+        function switchTab(tab) {
+            currentTab = tab;
+            const btn24 = document.getElementById('tab-btn-2024');
+            const btn25 = document.getElementById('tab-btn-2025');
+            const btnComb = document.getElementById('tab-btn-combined');
+
+            const leaveGroup = document.getElementById('leave-adjustment-group');
+            const advGroup = document.getElementById('advance-received-group');
+            const elig25Group = document.getElementById('eligibility-2025-group');
+            const advanceBreakdownRow = document.getElementById('advance-breakdown-row');
+            const printAdvanceRow = document.getElementById('print-advance-row');
+            const combinedReportContainer = document.getElementById('combined-report-container');
+
+            // Reset tab button styles
+            const defaultBtnClass = "flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 text-slate-600 hover:text-slate-900";
+            const activeBtnClass = "flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-xs sm:text-sm transition-all duration-200 bg-white text-fci-navy shadow-sm";
+
+            btn24.className = defaultBtnClass;
+            btn25.className = defaultBtnClass;
+            btnComb.className = defaultBtnClass;
+
+            if (tab === '2024-25') {
+                btn24.className = activeBtnClass;
+                leaveGroup.classList.remove('hidden');
+                advGroup.classList.remove('hidden');
+                elig25Group.classList.add('hidden');
+                advanceBreakdownRow.classList.remove('hidden');
+                if (printAdvanceRow) printAdvanceRow.classList.remove('hidden');
+                combinedReportContainer.classList.add('hidden');
+
+                document.getElementById('summary-pill').innerText = "Final PLI FY 2024-25";
+                document.getElementById('summary-pill').className = "text-xs font-semibold px-2.5 py-1 rounded bg-emerald-400 text-slate-900 uppercase tracking-wide";
+                document.getElementById('result-title').innerText = "Net Payable / Recoverable";
+                document.getElementById('result-subtitle').innerText = "After pro-rata months, leave deduction, max cap ₹37,800 and advance adjustment";
+                document.getElementById('final-label-text').innerText = "Balance Payment Released Now";
+                document.getElementById('final-note-text').innerText = "Final settlement after adjusting Oct 2025 advance";
+                document.getElementById('print-scheme-title').innerText = "Final PLI for FY 2024-25 (Circular WR-11-2026-07)";
+                document.getElementById('cap-badge').innerText = "Max Cap: ₹37,800";
+            } else if (tab === '2025-26') {
+                btn25.className = activeBtnClass;
+                leaveGroup.classList.add('hidden');
+                advGroup.classList.add('hidden');
+                elig25Group.classList.remove('hidden');
+                advanceBreakdownRow.classList.add('hidden');
+                if (printAdvanceRow) printAdvanceRow.classList.add('hidden');
+                combinedReportContainer.classList.add('hidden');
+
+                document.getElementById('summary-pill').innerText = "PLI Advance FY 2025-26";
+                document.getElementById('summary-pill').className = "text-xs font-semibold px-2.5 py-1 rounded bg-blue-400 text-slate-900 uppercase tracking-wide";
+                document.getElementById('result-title').innerText = "Eligible PLI Advance (2/3rd)";
+                document.getElementById('result-subtitle').innerText = "Advance for employees on rolls as on 01.04.2025 (Subject to Undertaking Annexure-I)";
+                document.getElementById('final-label-text').innerText = "Total PLI Advance Payable";
+                document.getElementById('final-note-text').innerText = "Adjustable against final PLI payment after closure of Final Accounts";
+                document.getElementById('print-scheme-title').innerText = "PLI Advance for FY 2025-26 (Circular WR-11-2026-07)";
+                document.getElementById('cap-badge').innerText = "Max Advance Cap: ₹25,000";
+            } else if (tab === 'combined') {
+                btnComb.className = activeBtnClass;
+                leaveGroup.classList.remove('hidden');
+                advGroup.classList.remove('hidden');
+                elig25Group.classList.remove('hidden');
+                combinedReportContainer.classList.remove('hidden');
+            }
+
+            calculatePLI();
+        }
+
+        // Service Months Slider
+        function updateMonthsSlider(val) {
+            document.getElementById('months-badge').innerText = val + (val == 1 ? " Month" : " Months");
+            calculatePLI();
+        }
+
+        // Auto-fill standard 2/3rd advance
+        function autoFillAdvance() {
+            const cat = document.getElementById('emp-category').value;
+            let standardAdvance = 0;
+
+            if (cat === 'cat1_4') {
+                const annualSalary = calculateFinancialYearsBasic().fy24_25.totalAnnualBasic;
+                const fullPLI = Math.min(annualSalary * 0.02, 37800);
+                standardAdvance = Math.min(fullPLI * (2/3), 25000); // 2/3rd cap
+            } else {
+                const deptBase = 21000;
+                const fullPLI = Math.min(deptBase * 0.15 * 12, 37800);
+                standardAdvance = Math.min(fullPLI * (2/3), 25000);
+            }
+
+            document.getElementById('advance-paid').value = Math.round(standardAdvance);
+            calculatePLI();
+        }
+
+        // Currency Formatter
+        function formatINR(val) {
+            return "₹" + Math.round(val).toLocaleString('en-IN');
+        }
+
+        // Standard FCI increment round: round up to nearest ₹10
+        function roundBasicPay(val) {
+            return Math.round(val / 10) * 10;
+        }
+
+        /**
+         * Comprehensive Month-wise Financial Year Back-Calculation Engine:
+         * Calculates true April-to-March earnings for both:
+         * - FY 2024-25 (April 2024 to March 2025: 9 months of 2024 + 3 months of 2025)
+         * - FY 2025-26 (April 2025 to March 2026: 9 months of 2025 + 3 months of 2026)
+         */
+        function calculateFinancialYearsBasic() {
+            const inputVal = parseFloat(document.getElementById('basic-pay').value) || 0;
+            const incCycle = document.getElementById('increment-cycle').value; // 'july', 'january', 'none'
+            const refType = document.getElementById('input-basic-reference').value; // 'current_2026', 'fy_2025_mid', 'fy_2024_end'
+            const hasPromo = document.getElementById('has-promotion').checked;
+            const promoDate = document.getElementById('promo-month-year').value; // e.g. '2024-10'
+            const promoRate = (parseFloat(document.getElementById('promo-rate').value) || 3) / 100;
+
+            // Step 1: Normalize input to basic pay as on March 2026 (End of FY 2025-26)
+            let basicAtMarch2026 = inputVal;
+
+            if (refType === 'current_2026') {
+                // If input is as-on-date in FY 2026-27 (e.g., Nov 2026), remove post-March 2026 increments
+                if (incCycle === 'july') {
+                    // July 2026 gave 3% increment
+                    basicAtMarch2026 = basicAtMarch2026 / 1.03;
+                }
+            } else if (refType === 'fy_2025_mid') {
+                // Input is Oct 2025. If increment was Jan, it hasn't happened yet for Jan 2026
+                if (incCycle === 'january') {
+                    basicAtMarch2026 = basicAtMarch2026 * 1.03;
+                }
+            } else if (refType === 'fy_2024_end') {
+                // Input is as on 31.03.2025. Step forward to March 2026
+                if (incCycle === 'july' || incCycle === 'january') {
+                    basicAtMarch2026 = basicAtMarch2026 * 1.03;
+                }
+                if (hasPromo && promoDate >= '2025-04' && promoDate <= '2026-03') {
+                    basicAtMarch2026 = basicAtMarch2026 * (1 + promoRate);
+                }
+            }
+
+            // Function to generate 12-month array for an FY from April (year) to March (year+1)
+            function getFYMonths(startYear) {
+                const months = [];
+                const monthNames = [
+                    { m: 4, name: 'अप्रैल (Apr)' },
+                    { m: 5, name: 'मई (May)' },
+                    { m: 6, name: 'जून (Jun)' },
+                    { m: 7, name: 'जुलाई (Jul)' },
+                    { m: 8, name: 'अगस्त (Aug)' },
+                    { m: 9, name: 'सितंबर (Sep)' },
+                    { m: 10, name: 'अक्टूबर (Oct)' },
+                    { m: 11, name: 'नवंबर (Nov)' },
+                    { m: 12, name: 'दिसंबर (Dec)' },
+                    { m: 1, name: 'जनवरी (Jan)' },
+                    { m: 2, name: 'फ़रवरी (Feb)' },
+                    { m: 3, name: 'मार्च (Mar)' }
+                ];
+
+                monthNames.forEach(item => {
+                    const yr = item.m >= 4 ? startYear : startYear + 1;
+                    const key = `${yr}-${String(item.m).padStart(2, '0')}`;
+                    months.push({
+                        key,
+                        monthName: `${item.name} ${yr}`,
+                        year: yr,
+                        monthNum: item.m
+                    });
+                });
+                return months;
+            }
+
+            // Helper to compute basic pay for any month key 'YYYY-MM' by rolling back from March 2026
+            function getBasicForMonth(key) {
+                let salary = basicAtMarch2026;
+
+                // Revert Jan 2026 increment if month is prior to Jan 2026
+                if (incCycle === 'january' && key < '2026-01') {
+                    salary = salary / 1.03;
+                }
+
+                // Revert July 2025 increment if month is prior to July 2025
+                if (incCycle === 'july' && key < '2025-07') {
+                    salary = salary / 1.03;
+                }
+
+                // Revert Jan 2025 increment if month is prior to Jan 2025
+                if (incCycle === 'january' && key < '2025-01') {
+                    salary = salary / 1.03;
+                }
+
+                // Revert July 2024 increment if month is prior to July 2024
+                if (incCycle === 'july' && key < '2024-07') {
+                    salary = salary / 1.03;
+                }
+
+                // Revert Promotion if month is prior to Promotion Date
+                if (hasPromo && key < promoDate) {
+                    salary = salary / (1 + promoRate);
+                }
+
+                return roundBasicPay(salary);
+            }
+
+            // Calculate FY 2024-25 (April 2024 to March 2025)
+            const monthsFY24 = getFYMonths(2024);
+            let totalBasic24 = 0;
+            const details24 = monthsFY24.map(m => {
+                const b = getBasicForMonth(m.key);
+                totalBasic24 += b;
+                let event = "नियमित (Normal)";
+                if (incCycle === 'july' && m.key === '2024-07') event = "3% Increment (1 Jul)";
+                if (incCycle === 'january' && m.key === '2025-01') event = "3% Increment (1 Jan)";
+                if (hasPromo && m.key === promoDate) event = `प्रमोशन (+${(promoRate * 100).toFixed(0)}%)`;
+                return { ...m, basic: b, event };
+            });
+
+            // Calculate FY 2025-26 (April 2025 to March 2026)
+            const monthsFY25 = getFYMonths(2025);
+            let totalBasic25 = 0;
+            const details25 = monthsFY25.map(m => {
+                const b = getBasicForMonth(m.key);
+                totalBasic25 += b;
+                let event = "नियमित (Normal)";
+                if (incCycle === 'july' && m.key === '2025-07') event = "3% Increment (1 Jul)";
+                if (incCycle === 'january' && m.key === '2026-01') event = "3% Increment (1 Jan)";
+                if (hasPromo && m.key === promoDate) event = `प्रमोशन (+${(promoRate * 100).toFixed(0)}%)`;
+                return { ...m, basic: b, event };
+            });
+
+            return {
+                fy24_25: {
+                    details: details24,
+                    totalAnnualBasic: totalBasic24,
+                    avgBasic: totalBasic24 / 12
+                },
+                fy25_26: {
+                    details: details25,
+                    totalAnnualBasic: totalBasic25,
+                    avgBasic: totalBasic25 / 12
+                }
+            };
+        }
+
+        // Print Combined Statement directly
+        function printCombinedSlip() {
+            switchTab('combined');
+            setTimeout(() => {
+                window.print();
+            }, 300);
+        }
+
+        // Core Calculation Engine
+        function calculatePLI() {
+            const category = document.getElementById('emp-category').value;
+            const months = parseInt(document.getElementById('service-months').value) || 12;
+            const isPortWorker = document.getElementById('is-port-worker').checked;
+            
+            // Check port worker ineligibility
+            const portBanner = document.getElementById('port-warning-banner');
+            if (isPortWorker && (category === 'dept_labour' || category === 'dps_labour')) {
+                portBanner.classList.remove('hidden');
+                renderDisqualified("Ineligible: Chennai & Vizag port labourers not covered under PLI.");
+                return;
+            } else {
+                portBanner.classList.add('hidden');
+            }
+
+            // Check FY 2025-26 advance eligibility rules
+            const advBanner = document.getElementById('advance-disqualify-banner');
+            const onRolls = document.getElementById('on-rolls-apr25').checked;
+            const retiredOrDied = document.getElementById('retired-died-flag').checked;
+            const deputation = document.getElementById('deputation-trainee-flag').checked;
+
+            if (currentTab === '2025-26') {
+                if (!onRolls) {
+                    advBanner.classList.remove('hidden');
+                    document.getElementById('advance-disqualify-msg').innerText = "Employee was not on rolls of the organization on 01.04.2025 or is no longer in service.";
+                    renderDisqualified("Not admissible: Must be on rolls on 01.04.2025 and still in service.");
+                    return;
+                }
+                if (retiredOrDied) {
+                    advBanner.classList.remove('hidden');
+                    document.getElementById('advance-disqualify-msg').innerText = "Executives / Staff / Labourers who retired, resigned, or died during 2025-26 shall not be paid PLI advance.";
+                    renderDisqualified("Ineligible: Retired/Resigned/Died during 2025-26.");
+                    return;
+                }
+                if (deputation) {
+                    advBanner.classList.remove('hidden');
+                    document.getElementById('advance-disqualify-msg').innerText = "Apprentices, trainees including Management Trainees and personnel on deputation/lien are not eligible.";
+                    renderDisqualified("Not admissible: Trainee/Apprentice/Deputation/Lien.");
+                    return;
+                }
+                advBanner.classList.add('hidden');
+            } else {
+                advBanner.classList.add('hidden');
+            }
+
+            // Perform calculations for both years
+            const financialYears = calculateFinancialYearsBasic();
+            const basicFY24 = financialYears.fy24_25;
+            const basicFY25 = financialYears.fy25_26;
+
+            // Populate Month-Wise Modal Table
+            const tbody = document.getElementById('monthwise-table-body');
+            tbody.innerHTML = '';
+            
+            // Render FY 2024-25 rows
+            const trHeader24 = document.createElement('tr');
+            trHeader24.className = "bg-slate-200 font-bold text-slate-800 text-[11px]";
+            trHeader24.innerHTML = `<td colspan="3" class="p-1.5 border">वित्तीय वर्ष FY 2024-25 (April 2024 – March 2025)</td>`;
+            tbody.appendChild(trHeader24);
+
+            basicFY24.details.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-2 border">${row.monthName}</td>
+                    <td class="p-2 border"><span class="bg-blue-50 text-blue-800 px-1.5 py-0.5 rounded text-[10px]">${row.event}</span></td>
+                    <td class="p-2 border text-right font-semibold">${formatINR(row.basic)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Render FY 2025-26 rows
+            const trHeader25 = document.createElement('tr');
+            trHeader25.className = "bg-slate-200 font-bold text-slate-800 text-[11px]";
+            trHeader25.innerHTML = `<td colspan="3" class="p-1.5 border">वित्तीय वर्ष FY 2025-26 (April 2025 – March 2026)</td>`;
+            tbody.appendChild(trHeader25);
+
+            basicFY25.details.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-2 border">${row.monthName}</td>
+                    <td class="p-2 border"><span class="bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded text-[10px]">${row.event}</span></td>
+                    <td class="p-2 border text-right font-semibold">${formatINR(row.basic)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('monthwise-total-basic').innerText = formatINR(basicFY24.totalAnnualBasic);
+            document.getElementById('monthwise-total-pli').innerText = formatINR(basicFY24.totalAnnualBasic * 0.02);
+
+            let grossPLI24 = 0;
+            let grossPLI25 = 0;
+            let formulaDesc = "";
+            let categoryText = "";
+
+            if (category === 'cat1_4') {
+                categoryText = "Cat I & II Executives / Cat-III & IV Staff";
+                grossPLI24 = basicFY24.totalAnnualBasic * 0.02;
+                grossPLI25 = basicFY25.totalAnnualBasic * 0.02;
+                
+                document.getElementById('annual-basic-display').innerText = formatINR(basicFY24.totalAnnualBasic);
+
+                if (currentTab === '2024-25') {
+                    formulaDesc = `2% of FY 2024-25 Annual Basic (${formatINR(basicFY24.totalAnnualBasic)})`;
+                    document.getElementById('print-wage-base').innerText = `${formatINR(basicFY24.avgBasic)} avg/mo (Total: ${formatINR(basicFY24.totalAnnualBasic)})`;
+                } else {
+                    formulaDesc = `2% of FY 2025-26 Annual Basic (${formatINR(basicFY25.totalAnnualBasic)})`;
+                    document.getElementById('print-wage-base').innerText = `${formatINR(basicFY25.avgBasic)} avg/mo (Total: ${formatINR(basicFY25.totalAnnualBasic)})`;
+                }
+
+            } else if (category === 'dept_labour') {
+                categoryText = "Departmental Labourer";
+                const basicPlusIDA = parseFloat(document.getElementById('dept-basic-ida').value) || 0;
+                const cappedBase = Math.min(basicPlusIDA, 21000);
+                document.getElementById('dept-effective-base').innerText = formatINR(cappedBase);
+                grossPLI24 = 0.15 * cappedBase * 12;
+                grossPLI25 = 0.15 * cappedBase * 12;
+                formulaDesc = `15% of min(${formatINR(basicPlusIDA)}, ₹21,000) × 12 months`;
+                document.getElementById('print-wage-base').innerText = `${formatINR(basicPlusIDA)} Basic+IDA (Base: ${formatINR(cappedBase)})`;
+
+            } else if (category === 'dps_labour') {
+                categoryText = "Direct Payment System (DPS) Labourer";
+                const pieceRate = parseFloat(document.getElementById('dps-piecerate').value) || 0;
+                const irDays = parseFloat(document.getElementById('dps-ir-days').value) || 0;
+                const monthlyIR = irDays * 50; // ₹50/day
+                document.getElementById('dps-ir-amount').value = formatINR(monthlyIR);
+
+                const totalMonthlyWage = pieceRate + monthlyIR;
+                document.getElementById('dps-total-wage-display').innerText = formatINR(totalMonthlyWage);
+
+                const cappedBase = Math.min(totalMonthlyWage, 21000);
+                grossPLI24 = 0.15 * cappedBase * 12;
+                grossPLI25 = 0.15 * cappedBase * 12;
+                formulaDesc = `15% of min(Piece-rate + IR, ₹21,000) [Base: ${formatINR(cappedBase)}] × 12`;
+                document.getElementById('print-wage-base').innerText = `Piece-rate: ${formatINR(pieceRate)} + IR: ${formatINR(monthlyIR)}`;
+            }
+
+            // Pro-rata Service Factor
+            const proRataRatio = months / 12;
+            const proRataPLI24 = grossPLI24 * proRataRatio;
+            const proRataPLI25 = grossPLI25 * proRataRatio;
+            const proRataDesc = `${months} out of 12 completed calendar months (${(proRataRatio * 100).toFixed(1)}%)`;
+
+            // Leave Deductions for FY 2024-25
+            const nonCLLeaves = parseFloat(document.getElementById('leaves-taken').value) || 0;
+            const lwpDays = parseFloat(document.getElementById('lwp-days').value) || 0;
+            const excessNonCL = Math.max(0, nonCLLeaves - 60);
+            const totalExcessLeaveDays = excessNonCL + lwpDays;
+            
+            let leaveDeduction24 = 0;
+            let leaveDesc = "No deduction (Leaves ≤ 60 days, no LWP)";
+            if (totalExcessLeaveDays > 0) {
+                const dailyRate = proRataPLI24 / 365;
+                leaveDeduction24 = dailyRate * totalExcessLeaveDays;
+                leaveDesc = `${excessNonCL} days exceeding 60 non-CL + ${lwpDays} LWP days = ${totalExcessLeaveDays} deducted days`;
+            }
+
+            const postLeavePLI24 = Math.max(0, proRataPLI24 - leaveDeduction24);
+            const cappedPLI24 = Math.min(postLeavePLI24, 37800);
+
+            // FY 2025-26 Advance Calculation: 2/3rd of eligibility, max ₹25,000
+            let advancePayable25 = 0;
+            const isDisqualified25 = !onRolls || retiredOrDied || deputation;
+            if (!isDisqualified25) {
+                const twoThird25 = proRataPLI25 * (2/3);
+                advancePayable25 = Math.min(twoThird25, 25000);
+            }
+
+            // Advance already paid in Oct 2025 for FY 2024-25
+            const advancePaid24 = parseFloat(document.getElementById('advance-paid').value) || 0;
+            const netBalance24 = cappedPLI24 - advancePaid24;
+
+            // Combined Net Disbursal
+            const combinedNetTotal = netBalance24 + advancePayable25;
+
+            // Update Combined Statement Section
+            document.getElementById('comb-sum-bal24').innerText = formatINR(netBalance24);
+            document.getElementById('comb-sum-adv25').innerText = formatINR(advancePayable25);
+            document.getElementById('comb-sum-total').innerText = formatINR(combinedNetTotal);
+
+            document.getElementById('comb-tbl-wage24').innerText = category === 'cat1_4' ? formatINR(basicFY24.totalAnnualBasic) : formatINR(Math.min(parseFloat(document.getElementById('dept-basic-ida').value) || 21000, 21000) * 12);
+            document.getElementById('comb-tbl-wage25').innerText = category === 'cat1_4' ? formatINR(basicFY25.totalAnnualBasic) : formatINR(Math.min(parseFloat(document.getElementById('dept-basic-ida').value) || 21000, 21000) * 12);
+            
+            document.getElementById('comb-tbl-elig24').innerText = formatINR(grossPLI24);
+            document.getElementById('comb-tbl-elig25').innerText = formatINR(grossPLI25);
+
+            document.getElementById('comb-tbl-prorata24').innerText = `${months}/12 Months (${formatINR(proRataPLI24)})`;
+            document.getElementById('comb-tbl-prorata25').innerText = `${months}/12 Months (${formatINR(proRataPLI25)})`;
+
+            document.getElementById('comb-tbl-leave24').innerText = "- " + formatINR(leaveDeduction24);
+            document.getElementById('comb-tbl-cap24').innerText = formatINR(cappedPLI24) + " (Cap ₹37,800)";
+            document.getElementById('comb-tbl-cap25').innerText = formatINR(advancePayable25) + " (Cap ₹25,000)";
+
+            document.getElementById('comb-tbl-advded24').innerText = "- " + formatINR(advancePaid24);
+            document.getElementById('comb-tbl-net24').innerText = formatINR(netBalance24);
+            document.getElementById('comb-tbl-net25').innerText = formatINR(advancePayable25);
+            document.getElementById('comb-tbl-grandtotal').innerText = formatINR(combinedNetTotal);
+
+            // Update Active Display Card based on Current Tab
+            let activeGross = grossPLI24;
+            let activeProRata = proRataPLI24;
+            let activeCapped = cappedPLI24;
+            let activeNet = netBalance24;
+
+            if (currentTab === '2025-26') {
+                activeGross = grossPLI25;
+                activeProRata = proRataPLI25;
+                activeCapped = advancePayable25;
+                activeNet = advancePayable25;
+            } else if (currentTab === 'combined') {
+                activeGross = grossPLI24 + grossPLI25;
+                activeProRata = proRataPLI24 + proRataPLI25;
+                activeCapped = cappedPLI24 + advancePayable25;
+                activeNet = combinedNetTotal;
+            }
+
+            const formulaElem = document.getElementById('formula-detail-text');
+            if (formulaElem) formulaElem.innerText = formulaDesc;
+            const grossElem = document.getElementById('gross-eligibility-display');
+            if (grossElem) grossElem.innerText = formatINR(activeGross);
+
+            const prorataElem = document.getElementById('prorata-detail-text');
+            if (prorataElem) prorataElem.innerText = proRataDesc;
+            const prorataValElem = document.getElementById('prorata-eligibility-display');
+            if (prorataValElem) prorataValElem.innerText = formatINR(activeProRata);
+
+            const leaveTag = document.getElementById('leave-days-tag');
+            if (leaveTag) leaveTag.innerText = totalExcessLeaveDays + " days";
+            const leaveText = document.getElementById('leave-deduction-text');
+            if (leaveText) leaveText.innerText = leaveDesc;
+            const leaveAmt = document.getElementById('leave-deduction-amount');
+            if (leaveAmt) leaveAmt.innerText = "- " + formatINR(leaveDeduction24);
+
+            const cappedElem = document.getElementById('capped-eligibility-display');
+            if (cappedElem) cappedElem.innerText = formatINR(activeCapped);
+            const advDedElem = document.getElementById('advance-deduction-display');
+            if (advDedElem) advDedElem.innerText = "- " + formatINR(advancePaid24);
+
+            // Final Result Status Formatting
+            const statusBadge = document.getElementById('status-badge');
+            const netDisplay = document.getElementById('net-amount-display');
+            const finalBalDisplay = document.getElementById('final-balance-display');
+
+            if (activeNet >= 0) {
+                if (netDisplay) {
+                    netDisplay.innerText = formatINR(activeNet);
+                    netDisplay.className = "text-3xl sm:text-4xl font-extrabold text-amber-300 tracking-tight";
+                }
+                if (finalBalDisplay) {
+                    finalBalDisplay.innerText = formatINR(activeNet);
+                    finalBalDisplay.className = "text-2xl font-black text-emerald-700 text-right";
+                }
+                
+                if (statusBadge) {
+                    if (currentTab === '2024-25') {
+                        statusBadge.innerHTML = `<i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Final Balance to Release`;
+                        statusBadge.className = "mt-1 inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 font-medium";
+                    } else if (currentTab === '2025-26') {
+                        statusBadge.innerHTML = `<i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Advance Payable`;
+                        statusBadge.className = "mt-1 inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30 font-medium";
+                    } else {
+                        statusBadge.innerHTML = `<i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Combined Net Disbursal`;
+                        statusBadge.className = "mt-1 inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 font-medium";
+                    }
+                }
+            } else {
+                const recoveryAmount = Math.abs(activeNet);
+                if (netDisplay) {
+                    netDisplay.innerText = "- " + formatINR(recoveryAmount);
+                    netDisplay.className = "text-3xl sm:text-4xl font-extrabold text-red-300 tracking-tight";
+                }
+                if (finalBalDisplay) {
+                    finalBalDisplay.innerText = "Recover: " + formatINR(recoveryAmount);
+                    finalBalDisplay.className = "text-2xl font-black text-red-600 text-right";
+                }
+
+                if (statusBadge) {
+                    statusBadge.innerHTML = `<i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Excess Advance Recoverable`;
+                    statusBadge.className = "mt-1 inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-200 border border-red-400/30 font-medium";
+                }
+            }
+
+            // Sync with Print Slip
+            document.getElementById('print-category-title').innerText = categoryText;
+            document.getElementById('print-service-months').innerText = `${months} Completed Months`;
+            document.getElementById('print-leave-deductions').innerText = `${totalExcessLeaveDays} Days`;
+
+            document.getElementById('print-item1-desc').innerText = `1. Gross Eligibility Formula (${formulaDesc})`;
+            document.getElementById('print-item1-val').innerText = formatINR(activeGross);
+
+            document.getElementById('print-item2-desc').innerText = `2. Pro-rata Service Factor (${months}/12 Months)`;
+            document.getElementById('print-item2-val').innerText = formatINR(activeProRata);
+
+            document.getElementById('print-item3-val').innerText = "- " + formatINR(leaveDeduction24);
+            document.getElementById('print-item4-val').innerText = formatINR(activeCapped);
+            document.getElementById('print-item5-val').innerText = "- " + formatINR(advancePaid24);
+            
+            if (currentTab === 'combined') {
+                document.getElementById('print-scheme-title').innerText = "COMBINED STATEMENT: FY 2024-25 Final + FY 2025-26 Advance (Circular WR-11-2026-07)";
+                document.getElementById('print-final-label').innerText = "TOTAL COMBINED NET DISBURSAL (BALANCE 24-25 + ADVANCE 25-26)";
+                document.getElementById('print-final-val').innerText = formatINR(combinedNetTotal);
+            } else if (currentTab === '2024-25') {
+                if (netBalance24 >= 0) {
+                    document.getElementById('print-final-label').innerText = "FINAL NET BALANCE PAYABLE (FY 2024-25)";
+                    document.getElementById('print-final-val').innerText = formatINR(netBalance24);
+                } else {
+                    document.getElementById('print-final-label').innerText = "EXCESS ADVANCE RECOVERABLE FROM EMPLOYEE";
+                    document.getElementById('print-final-val').innerText = "- " + formatINR(Math.abs(netBalance24));
+                }
+            } else {
+                document.getElementById('print-final-label').innerText = "TOTAL PLI ADVANCE PAYABLE (2025-26)";
+                document.getElementById('print-final-val').innerText = formatINR(advancePayable25);
+            }
+
+            lucide.createIcons();
+        }
+
+        // Handle Disqualified State
+        function renderDisqualified(reason) {
+            const netDisplay = document.getElementById('net-amount-display');
+            if (netDisplay) netDisplay.innerText = "₹0";
+            const grossElem = document.getElementById('gross-eligibility-display');
+            if (grossElem) grossElem.innerText = "₹0";
+            const proRataElem = document.getElementById('prorata-eligibility-display');
+            if (proRataElem) proRataElem.innerText = "₹0";
+            const cappedElem = document.getElementById('capped-eligibility-display');
+            if (cappedElem) cappedElem.innerText = "₹0";
+            const finalBal = document.getElementById('final-balance-display');
+            if (finalBal) finalBal.innerText = "₹0 (Ineligible)";
+            
+            const badge = document.getElementById('status-badge');
+            if (badge) {
+                badge.innerHTML = `<i data-lucide="x-circle" class="w-3.5 h-3.5"></i> ${reason}`;
+                badge.className = "mt-1 inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-200 border border-red-400/30 font-medium";
+            }
+            lucide.createIcons();
+        }
+
+        // Reset to initial clean state
+        function resetDefaults() {
+            document.getElementById('emp-category').value = 'cat1_4';
+            document.getElementById('basic-pay').value = '65000';
+            document.getElementById('dept-basic-ida').value = '28500';
+            document.getElementById('dps-piecerate').value = '18000';
+            document.getElementById('dps-ir-days').value = '26';
+            document.getElementById('service-months').value = '12';
+            document.getElementById('leaves-taken').value = '0';
+            document.getElementById('lwp-days').value = '0';
+            document.getElementById('advance-paid').value = '10400';
+            document.getElementById('is-port-worker').checked = false;
+            document.getElementById('on-rolls-apr25').checked = true;
+            document.getElementById('retired-died-flag').checked = false;
+            document.getElementById('deputation-trainee-flag').checked = false;
+            
+            handleCategoryChange();
+            updateMonthsSlider(12);
+        }
+
+        // Modal Handlers
+        function openUndertakingModal() {
+            document.getElementById('undertaking-modal').classList.remove('hidden');
+        }
+
+        function closeUndertakingModal() {
+            document.getElementById('undertaking-modal').classList.add('hidden');
+        }
+
+        function printUndertaking() {
+            const printContents = document.getElementById('undertaking-content').innerHTML;
+            const originalContents = document.body.innerHTML;
+            document.body.innerHTML = `
+                <div style="padding: 40px; font-family: serif; max-width: 800px; margin: auto;">
+                    ${printContents}
+                </div>
+            `;
+            window.print();
+            document.body.innerHTML = originalContents;
+            location.reload(); // Re-bind dynamic state
+        }
+    </script>
+</body>
+</html>
