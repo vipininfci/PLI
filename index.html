@@ -379,18 +379,20 @@
                     <div id="advance-received-group" class="pt-2 border-t border-slate-200 space-y-2">
                         <div class="flex justify-between items-center">
                             <label class="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                                Advance Released in Oct 2025 (₹)
+                                Advance Released in Oct 2025 (2/3rd)
                             </label>
-                            <button type="button" onclick="autoFillAdvance()" class="text-[11px] text-blue-600 hover:text-blue-800 underline font-medium">
-                                Auto 2/3rd Cap
-                            </button>
+                            <label class="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-600 select-none">
+                                <input type="checkbox" id="override-advance-toggle" onchange="toggleAdvanceOverride()" class="rounded text-fci-blue focus:ring-fci-blue w-3.5 h-3.5">
+                                <span>Manual Override</span>
+                            </label>
                         </div>
                         <div class="relative">
                             <span class="absolute left-3.5 top-2.5 text-slate-400 font-bold text-sm">₹</span>
-                            <input type="number" id="advance-paid" value="10400" min="0" step="100" oninput="calculatePLI()" class="w-full pl-8 pr-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-fci-blue outline-none font-semibold text-slate-800">
+                            <input type="number" id="advance-paid" readonly min="0" step="100" oninput="calculatePLI()" class="w-full pl-8 pr-3.5 py-2 text-sm bg-slate-100 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-fci-blue outline-none font-semibold text-slate-700 cursor-not-allowed transition">
                         </div>
-                        <p class="text-[11px] text-slate-500">
-                            Released vide Circular WR-11-2025-04 dated 16.10.2025 (2/3rd of eligible amount, max ₹25,000 for labour).
+                        <p class="text-[11px] text-slate-500 flex items-center justify-between">
+                            <span id="advance-calc-note">Auto-assumed 2/3rd of eligible PLI as per Circular WR-11-2025-04</span>
+                            <span id="advance-pct-badge" class="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">2/3rd Auto</span>
                         </p>
                     </div>
 
@@ -1032,22 +1034,28 @@
             calculatePLI();
         }
 
-        // Auto-fill standard 2/3rd advance
-        function autoFillAdvance() {
-            const cat = document.getElementById('emp-category').value;
-            let standardAdvance = 0;
+        // Toggle Manual Advance Override
+        function toggleAdvanceOverride() {
+            const isManual = document.getElementById('override-advance-toggle').checked;
+            const advInput = document.getElementById('advance-paid');
+            const advBadge = document.getElementById('advance-pct-badge');
+            const advNote = document.getElementById('advance-calc-note');
 
-            if (cat === 'cat1_4') {
-                const annualSalary = calculateFinancialYearsBasic().fy24_25.totalAnnualBasic;
-                const fullPLI = Math.min(annualSalary * 0.02, 37800);
-                standardAdvance = Math.min(fullPLI * (2/3), 25000); // 2/3rd cap
+            if (isManual) {
+                advInput.removeAttribute('readonly');
+                advInput.classList.remove('bg-slate-100', 'border-slate-200', 'cursor-not-allowed', 'text-slate-700');
+                advInput.classList.add('bg-white', 'border-slate-300', 'text-slate-800');
+                advBadge.innerText = "Manual";
+                advBadge.className = "font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200";
+                advNote.innerText = "Custom advance entered manually";
             } else {
-                const deptBase = 21000;
-                const fullPLI = Math.min(deptBase * 0.15 * 12, 37800);
-                standardAdvance = Math.min(fullPLI * (2/3), 25000);
+                advInput.setAttribute('readonly', 'true');
+                advInput.classList.remove('bg-white', 'border-slate-300', 'text-slate-800');
+                advInput.classList.add('bg-slate-100', 'border-slate-200', 'cursor-not-allowed', 'text-slate-700');
+                advBadge.innerText = "2/3rd Auto";
+                advBadge.className = "font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200";
+                advNote.innerText = "Auto-assumed 2/3rd of eligible PLI as per Circular WR-11-2025-04";
             }
-
-            document.getElementById('advance-paid').value = Math.round(standardAdvance);
             calculatePLI();
         }
 
@@ -1370,6 +1378,19 @@
             const postLeavePLI24 = Math.max(0, proRataPLI24 - leaveDeduction24);
             const cappedPLI24 = Math.min(postLeavePLI24, 37800);
 
+            // Compute or retrieve assumed 2/3rd advance for FY 2024-25 (Circular WR-11-2025-04)
+            const isManualAdvance = document.getElementById('override-advance-toggle').checked;
+            let advancePaid24 = 0;
+
+            if (!isManualAdvance) {
+                // Circular WR-11-2025-04 rule: 2/3rd of eligible PLI, subject to max of ₹25,000 for labour/eligible base
+                const autoCalculatedAdvance = Math.min(Math.round(cappedPLI24 * (2 / 3)), 25000);
+                advancePaid24 = autoCalculatedAdvance;
+                document.getElementById('advance-paid').value = advancePaid24;
+            } else {
+                advancePaid24 = parseFloat(document.getElementById('advance-paid').value) || 0;
+            }
+
             // FY 2025-26 Advance Calculation: 2/3rd of eligibility, max ₹25,000
             let advancePayable25 = 0;
             const isDisqualified25 = !onRolls || retiredOrDied || deputation;
@@ -1378,8 +1399,6 @@
                 advancePayable25 = Math.min(twoThird25, 25000);
             }
 
-            // Advance already paid in Oct 2025 for FY 2024-25
-            const advancePaid24 = parseFloat(document.getElementById('advance-paid').value) || 0;
             const netBalance24 = cappedPLI24 - advancePaid24;
 
             // Combined Net Disbursal
@@ -1558,7 +1577,8 @@
             document.getElementById('service-months').value = '12';
             document.getElementById('leaves-taken').value = '0';
             document.getElementById('lwp-days').value = '0';
-            document.getElementById('advance-paid').value = '10400';
+            document.getElementById('override-advance-toggle').checked = false;
+            toggleAdvanceOverride();
             document.getElementById('is-port-worker').checked = false;
             document.getElementById('on-rolls-apr25').checked = true;
             document.getElementById('retired-died-flag').checked = false;
